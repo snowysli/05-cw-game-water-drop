@@ -15,9 +15,13 @@ function snapToNearestRowWithIdx(x) {
   let minDist = Infinity, best = xs[0], idx = 0;
   for (let i = 0; i < xs.length; ++i) {
     const d = Math.abs(x - xs[i]);
-    if (d < minDist) { minDist = d; best = xs[i]; idx = i; }
+    if (d < minDist) {
+      minDist = d;
+      best = xs[i];
+      idx = i;
+    }
   }
-  return {x: best, idx};
+  return { x: best, idx };
 }
 
 gameContainer.addEventListener("mousedown", (e) => {
@@ -91,60 +95,65 @@ gameContainer.addEventListener("mouseleave", (e) => {
     drawLayer.style.pointerEvents = "none";
   }
 });
-// Variables to control game state
-let gameRunning = false; // Keeps track of whether game is active or not
+
+// ------------------- GAME STATE -------------------
+let gameRunning = false;
 let dropMaker; // Will store our timer that creates drops regularly
-// Timer variables removed
-
-
 
 // Game speed settings
 let dropFallDuration = 4; // seconds
+let isEasyMode = true;
+let lives = 3;
 
-// Menu logic
+document.getElementById("lives").textContent = lives;
+
 document.getElementById("menu-easy-btn").addEventListener("click", () => {
-  dropFallDuration = 4;
+  dropFallDuration = 3.5;
+  isEasyMode = true;
+  lives = 3;
+  document.getElementById("lives").textContent = lives;
   document.getElementById("menu-overlay").style.display = "none";
   document.getElementById("game-wrapper").style.display = "flex";
 });
 
 document.getElementById("menu-hard-btn").addEventListener("click", () => {
   dropFallDuration = 1.5;
+  isEasyMode = false;
+  lives = 1; 
+  document.getElementById("lives").textContent = lives;
   document.getElementById("menu-overlay").style.display = "none";
   document.getElementById("game-wrapper").style.display = "flex";
 });
 
-// Wait for button click to start the game (in-game button)
+// ------------------- START GAME -------------------
 document.getElementById("start-btn").addEventListener("click", startGame);
 
 function startGame() {
-  // Prevent multiple games from running at once
-  if (gameRunning) return;
+  if (gameRunning) return; // prevent multiple starts
+
+  if (isEasyMode) {
+    lives = 3;
+    document.getElementById("lives").textContent = lives;
+  }
 
   gameRunning = true;
-
-  // Start the first drop
   createDrop();
 }
 
-
+// ------------------- END GAME -------------------
 function endGame() {
   gameRunning = false;
   clearInterval(dropMaker);
-  // Optionally, you can show a message or reset drops here
 }
 
-
+// ------------------- CREATE DROP -------------------
 function createDrop() {
-  // Create a new div element that will be our water drop
   const drop = document.createElement("div");
   drop.className = "water-drop";
 
-  // Set drops to a fixed size
-  const size = 70;
+  const size = 60;
   drop.style.width = drop.style.height = `${size}px`;
 
-  // Add the water drop image
   const img = document.createElement("img");
   img.src = "./img/water-drop.png";
   img.alt = "Water Drop";
@@ -152,26 +161,91 @@ function createDrop() {
   img.style.display = "block";
   drop.appendChild(img);
 
-  // Four possible line positions (20%, 40%, 60%, 80% of container width)
-  const gameWidth = document.getElementById("game-container").offsetWidth;
+  const gameWidth = gameContainer.offsetWidth;
   const linePercents = [0.2, 0.4, 0.6, 0.8];
   const lineIndex = Math.floor(Math.random() * linePercents.length);
   const centerX = gameWidth * linePercents[lineIndex];
-  // Center the drop on the line
   drop.style.left = (centerX - size / 2) + "px";
+  drop.dataset.lineIndex = lineIndex;
 
-  // Make drops fall for the current duration
   drop.style.animationDuration = dropFallDuration + "s";
+  gameContainer.appendChild(drop);
 
-  // Add the new drop to the game screen
-  document.getElementById("game-container").appendChild(drop);
-
-  // Remove drops that reach the bottom (weren't clicked)
   drop.addEventListener("animationend", () => {
-    drop.remove(); // Clean up drops that weren't caught
-    // Only create a new drop if the game is still running
-    if (gameRunning) {
-      createDrop();
+    drop.remove();
+    let score = parseInt(document.getElementById("score").textContent, 10);
+    if (parseInt(drop.dataset.lineIndex, 10) === 3) {
+      score += 100;
+    } else {
+      score -= 50;
+      if (isEasyMode) {
+        lives--;
+        document.getElementById("lives").textContent = lives;
+        if (lives <= 0) {
+          gameRunning = false;
+          showWinMessage("Game Over! You ran out of lives.");
+          return;
+        }
+      } else {
+        // Hard mode: game over immediately on ghost
+        gameRunning = false;
+        showWinMessage("Game Over! You touched a ghost.");
+        return;
+      }
+    }
+    document.getElementById("score").textContent = score;
+
+    if (isEasyMode) {
+      if (score >= 500) {
+        gameRunning = false;
+        showWinMessage("Good job! Jerry is filled!");
+      } else if (gameRunning) {
+        createDrop();
+      }
+    } else {
+      if (score >= 1000) {
+        gameRunning = false;
+        showWinMessage("Congratulations! Jerry is filled with water on hard mode!");
+      } else if (gameRunning) {
+        createDrop();
+      }
     }
   });
+}
+
+// ------------------- WIN / GAME OVER -------------------
+function showWinMessage(msg) {
+  const winMsg = document.getElementById("win-message");
+  const winMsgText = document.getElementById("win-message-text");
+  winMsgText.textContent = msg;
+  winMsg.style.display = "block";
+
+  // Remove all user-drawn lines
+  document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
+
+  document.getElementById("replay-btn").onclick = () => {
+    winMsg.style.display = "none";
+    document.getElementById("score").textContent = "0";
+    if (isEasyMode) {
+      lives = 3;
+      document.getElementById("lives").textContent = lives;
+    }
+    document.querySelectorAll('.water-drop').forEach(d => d.remove());
+    document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
+    gameRunning = true;
+    createDrop();
+  };
+
+  document.getElementById("menu-btn").onclick = () => {
+    winMsg.style.display = "none";
+    document.getElementById("score").textContent = "0";
+    if (isEasyMode) {
+      lives = 3;
+      document.getElementById("lives").textContent = lives;
+    }
+    document.querySelectorAll('.water-drop').forEach(d => d.remove());
+    document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
+    document.getElementById("menu-overlay").style.display = "flex";
+    document.getElementById("game-wrapper").style.display = "none";
+  };
 }

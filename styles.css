@@ -1,3 +1,46 @@
+.lives {
+    flex: 0 1 auto;
+    font-size: 24px;
+    font-weight: bold;
+    color: #F5402C;
+}
+.win-buttons {
+    margin-top: 24px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+#replay-btn, #menu-btn {
+    padding: 10px 28px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 8px;
+    background: #2E9DF7;
+    color: #fff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+#replay-btn:hover, #menu-btn:hover {
+    background: #159A48;
+}
+/* Win message styles */
+.win-message {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    color: #159A48;
+    font-size: 2.2rem;
+    font-weight: bold;
+    padding: 32px 48px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    z-index: 200;
+    text-align: center;
+    border: 3px solid #2E9DF7;
+}
 .catcher-img {
     width: 80px;
     height: 80px;

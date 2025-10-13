@@ -9,19 +9,27 @@
 <body>
     <div class="menu-overlay" id="menu-overlay">
         <div class="menu-box">
-            <h1 class="game-title">Water Drop</h1>
+            <h1 class="game-title">Bottle Fill</h1>
             <button id="menu-easy-btn">Easy</button>
             <button id="menu-hard-btn">Hard</button>
         </div>
     </div>
     <div class="game-wrapper" id="game-wrapper" style="display:none;">
-        <h1 class="game-title">Water Drop</h1>
+        <h1 class="game-title">Bottle Fill</h1>
         <p class="game-tagline">Guide the water to Jerry and avoid the Ghost!</p>
         <div class="score-panel">
             <div class="score">Score: <span id="score">0</span></div>
+            <div class="lives">Lives: <span id="lives">3</span></div>
             <button id="start-btn">Start Game</button>
         </div>
-        <div id="game-container">
+        <div id="win-message" style="display:none;" class="win-message">
+            <span id="win-message-text"></span>
+            <div class="win-buttons">
+                <button id="replay-btn">Replay</button>
+                <button id="menu-btn">Return to Menu</button>
+            </div>
+        </div>
+    <div id="game-container">
             <svg id="draw-layer" width="800" height="600" style="position:absolute;top:0;left:0;z-index:10;pointer-events:none;"></svg>
             <div class="line" style="left: 20%"></div>
             <div class="line" style="left: 40%"></div>
@@ -30,7 +38,7 @@
             <div class="catcher" style="left: 20%"><img src="img/ghost.png" alt="Ghost" class="catcher-img"></div>
             <div class="catcher" style="left: 40%"><img src="img/ghost.png" alt="Ghost" class="catcher-img"></div>
             <div class="catcher" style="left: 60%"><img src="img/ghost.png" alt="Ghost" class="catcher-img"></div>
-            <div class="catcher" style="left: 80%"><img src="img/water-can.png" alt="Water Can" class="catcher-img"></div>
+            <div class="catcher" style="left: 80%"><img src="img/water-can-transparent.png" alt="Water Can" class="catcher-img"></div>
         </div>
     </div>
     
