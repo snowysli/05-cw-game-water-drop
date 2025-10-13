@@ -107,7 +107,30 @@ let lives = 3;
 
 document.getElementById("lives").textContent = lives;
 
+function randomizeCatchers() {
+  // There are 4 positions, 3 ghosts and 1 water can
+  const catcherImgs = [
+    { src: "img/ghost.png", alt: "Ghost" },
+    { src: "img/ghost.png", alt: "Ghost" },
+    { src: "img/ghost.png", alt: "Ghost" },
+    { src: "img/water-can-transparent.png", alt: "Water Can" }
+  ];
+  // Shuffle the array
+  for (let i = catcherImgs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [catcherImgs[i], catcherImgs[j]] = [catcherImgs[j], catcherImgs[i]];
+  }
+  // Update the DOM
+  const catchers = document.querySelectorAll('.catcher');
+  catchers.forEach((catcher, idx) => {
+    const img = catcher.querySelector('img');
+    img.src = catcherImgs[idx].src;
+    img.alt = catcherImgs[idx].alt;
+  });
+}
+
 document.getElementById("menu-easy-btn").addEventListener("click", () => {
+  randomizeCatchers();
   dropFallDuration = 3.5;
   isEasyMode = true;
   lives = 3;
@@ -117,6 +140,7 @@ document.getElementById("menu-easy-btn").addEventListener("click", () => {
 });
 
 document.getElementById("menu-hard-btn").addEventListener("click", () => {
+  randomizeCatchers();
   dropFallDuration = 1.5;
   isEasyMode = false;
   lives = 1; 
@@ -232,6 +256,7 @@ function showWinMessage(msg) {
     }
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
+      randomizeCatchers();
     gameRunning = true;
     createDrop();
   };
@@ -245,6 +270,7 @@ function showWinMessage(msg) {
     }
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
+      randomizeCatchers();
     document.getElementById("menu-overlay").style.display = "flex";
     document.getElementById("game-wrapper").style.display = "none";
   };
