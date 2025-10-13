@@ -1,3 +1,16 @@
+/* Proxima Nova Web Font Import */
+@font-face {
+    font-family: 'Proxima Nova';
+    src: url('https://fonts.cdnfonts.com/s/16257/ProximaNova-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Proxima Nova';
+    src: url('https://fonts.cdnfonts.com/s/16257/ProximaNova-Bold.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+}
 .lives {
     flex: 0 1 auto;
     font-size: 24px;
@@ -16,7 +29,7 @@
     border: none;
     border-radius: 8px;
     background: #2E9DF7;
-    color: #fff;
+    color: #8BD1CB;
     cursor: pointer;
     font-weight: bold;
     transition: background 0.2s;
@@ -31,7 +44,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     background: #fff;
-    color: #159A48;
+    color: #FFC907;
     font-size: 2.2rem;
     font-weight: bold;
     padding: 32px 48px;
@@ -40,6 +53,7 @@
     z-index: 200;
     text-align: center;
     border: 3px solid #2E9DF7;
+    font-family: 'Avenir', 'Proxima Nova', Arial, sans-serif;
 }
 .catcher-img {
     width: 80px;
@@ -142,8 +156,8 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f0f0;
-    font-family: Arial, sans-serif;
+    background-color: #8BD1CB;
+    font-family: 'Proxima Nova', Arial, sans-serif;
 }
 
 .game-wrapper {
@@ -151,6 +165,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    font-family: 'Proxima Nova', Arial, sans-serif;
 }
 
 .score-panel {
@@ -162,6 +177,7 @@ body {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: 'Proxima Nova', Arial, sans-serif;
 }
 
 .timer {
@@ -186,7 +202,7 @@ body {
     top: 0;
     width: 4px;
     height: calc(100% - 90px);
-    background: #2E9DF7;
+    background: #FF902A;
     opacity: 0.25;
     z-index: 1;
     pointer-events: none;
@@ -219,7 +235,7 @@ body {
     position: absolute;
     width: 60px;
     height: 60px;
-    animation: dropFall linear forwards;
+    /* animation removed, now animated by JS */
     transform-origin: center;
     cursor: pointer;
     padding: 0;
@@ -232,6 +248,7 @@ body {
     align-items: center;
     justify-content: center;
     overflow: visible;
+
 }
 
 .water-drop:hover {

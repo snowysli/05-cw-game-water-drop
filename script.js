@@ -44,6 +44,8 @@ gameContainer.addEventListener("mousedown", (e) => {
   line.setAttribute("stroke-width", "6");
   line.setAttribute("stroke-linecap", "round");
   line.classList.add("user-drawn-line");
+  // Store start row index on the SVG line element
+  line._snapStartIdx = snap.idx;
   drawLayer.appendChild(line);
   drawLayer._currentLine = line;
   drawLayer._snapStartX = x;
@@ -67,6 +69,8 @@ gameContainer.addEventListener("mousemove", (e) => {
     drawLayer._currentLine.setAttribute("x2", snap.x);
     drawLayer._currentLine.setAttribute("y2", y);
     drawLayer._currentLine._valid = true;
+    drawLayer._currentLine._snapEndIdx = snap.idx;
+    // Store end row index on the SVG line element
     drawLayer._currentLine._snapEndIdx = snap.idx;
   } else {
     // Keep the line at the start row if not valid
@@ -187,54 +191,165 @@ function createDrop() {
 
   const gameWidth = gameContainer.offsetWidth;
   const linePercents = [0.2, 0.4, 0.6, 0.8];
-  const lineIndex = Math.floor(Math.random() * linePercents.length);
-  const centerX = gameWidth * linePercents[lineIndex];
+  let lineIndex = Math.floor(Math.random() * linePercents.length);
+  let centerX = gameWidth * linePercents[lineIndex];
   drop.style.left = (centerX - size / 2) + "px";
   drop.dataset.lineIndex = lineIndex;
 
-  drop.style.animationDuration = dropFallDuration + "s";
-  gameContainer.appendChild(drop);
+  // Custom animation: let the drop follow user-drawn lines
+  let startY = -20;
+  let endY = 600;
+  let duration = dropFallDuration * 1000;
+  let startTime = null;
+  let lastRowIdx = lineIndex;
 
-  drop.addEventListener("animationend", () => {
-    drop.remove();
-    let score = parseInt(document.getElementById("score").textContent, 10);
-    if (parseInt(drop.dataset.lineIndex, 10) === 3) {
-      score += 100;
+  // Gather all user-drawn lines (SVG lines)
+  function getUserLines() {
+    return Array.from(document.querySelectorAll('.user-drawn-line')).map(line => {
+      return {
+        x1: parseFloat(line.getAttribute('x1')),
+        y1: parseFloat(line.getAttribute('y1')),
+        x2: parseFloat(line.getAttribute('x2')),
+        y2: parseFloat(line.getAttribute('y2')),
+        startIdx: line._snapStartIdx,
+        endIdx: line._snapEndIdx
+      };
+    });
+  }
+
+  function getRowX(idx) {
+    return gameWidth * linePercents[idx];
+  }
+
+  function animateDrop(ts) {
+    if (!startTime) startTime = ts;
+    let elapsed = ts - startTime;
+    let progress = Math.min(elapsed / duration, 1);
+    let y = startY + (endY - startY) * progress;
+
+    // Get all user-drawn lines
+    let userLines = getUserLines();
+
+    // Keep track of whether we’re currently sliding along a line
+    if (!drop._sliding) {
+      // --- Check if we should start sliding on a line ---
+      for (let line of userLines) {
+        if (
+          (line.startIdx === lastRowIdx && Math.abs(line.endIdx - lastRowIdx) === 1) ||
+          (line.endIdx === lastRowIdx && Math.abs(line.startIdx - lastRowIdx) === 1)
+        ) {
+          const minY = Math.min(line.y1, line.y2);
+          const maxY = Math.max(line.y1, line.y2);
+
+          // If drop is at the line’s Y range
+          if (y >= minY && y <= maxY) {
+            // Start sliding
+            drop._sliding = {
+              line,
+              t: 0, // progress along the line
+              startTime: ts
+            };
+            break;
+          }
+        }
+      }
+    }
+
+    let x;
+
+      if (drop._sliding) {
+        // --- Sliding motion along the diagonal line ---
+        const slide = drop._sliding;
+        const slideDuration = 400; // milliseconds it takes to traverse one line
+
+        // Determine how far along the line we are
+        let slideElapsed = ts - slide.startTime;
+        slide.t = Math.min(slideElapsed / slideDuration, 1);
+
+        const { line } = slide;
+        const lineX = line.x1 + (line.x2 - line.x1) * slide.t;
+        const lineY = line.y1 + (line.y2 - line.y1) * slide.t;
+
+        x = lineX;
+        y = lineY;
+
+        if (slide.t >= 1) {
+          // Done sliding — move to the other column and continue falling
+          drop._sliding = null;
+          lastRowIdx = line.endIdx;
+          drop.dataset.lineIndex = lastRowIdx;
+          // Set new startY and startTime so drop continues from end of line
+          startY = lineY;
+          // Adjust duration so the remaining fall is proportional
+          let remaining = endY - startY;
+          duration = (remaining / (endY - (-20))) * (dropFallDuration * 1000);
+          startTime = ts;
+        }
     } else {
-      score -= 50;
-      if (isEasyMode) {
-        lives--;
-        document.getElementById("lives").textContent = lives;
-        if (lives <= 0) {
+      // --- Regular vertical falling ---
+      x = getRowX(lastRowIdx);
+    }
+
+    // Update drop position
+    drop.style.top = y + "px";
+    drop.style.left = (x - size / 2) + "px";
+
+    // Continue or end animation
+    if (progress < 1 && gameRunning) {
+      requestAnimationFrame(animateDrop);
+    } else {
+      // --- Drop reached bottom ---
+      drop.remove();
+
+      let score = parseInt(document.getElementById("score").textContent, 10);
+      const catcherImgs = document.querySelectorAll('.catcher-img');
+      const idx = parseInt(drop.dataset.lineIndex, 10);
+      const catcherImg = catcherImgs[idx];
+
+      if (catcherImg && catcherImg.src.includes('water-can')) {
+        score += 100;
+      } else {
+        score -= 50;
+        if (isEasyMode) {
+          lives--;
+          document.getElementById("lives").textContent = lives;
+          if (lives <= 0) {
+            gameRunning = false;
+            showWinMessage("Game Over! You ran out of lives.");
+            return;
+          }
+        } else {
           gameRunning = false;
-          showWinMessage("Game Over! You ran out of lives.");
+          showWinMessage("Game Over! You touched a ghost.");
           return;
         }
-      } else {
-        // Hard mode: game over immediately on ghost
-        gameRunning = false;
-        showWinMessage("Game Over! You touched a ghost.");
-        return;
       }
-    }
-    document.getElementById("score").textContent = score;
 
-    if (isEasyMode) {
-      if (score >= 500) {
-        gameRunning = false;
-        showWinMessage("Good job! Jerry is filled!");
-      } else if (gameRunning) {
-        createDrop();
-      }
-    } else {
-      if (score >= 1000) {
-        gameRunning = false;
-        showWinMessage("Congratulations! Jerry is filled with water on hard mode!");
-      } else if (gameRunning) {
-        createDrop();
+      document.getElementById("score").textContent = score;
+
+      // Continue or end game
+      if (isEasyMode) {
+        if (score >= 500) {
+          gameRunning = false;
+          showWinMessage("Good job! Jerry is filled!");
+        } else if (gameRunning) {
+          createDrop();
+        }
+      } else {
+        if (score >= 1000) {
+          gameRunning = false;
+          showWinMessage("Congratulations! Jerry is filled with water on hard mode!");
+        } else if (gameRunning) {
+          createDrop();
+        }
       }
     }
-  });
+  }
+
+  drop.style.position = "absolute";
+  drop.style.top = startY + "px";
+  gameContainer.appendChild(drop);
+  requestAnimationFrame(animateDrop);
 }
 
 // ------------------- WIN / GAME OVER -------------------
@@ -256,7 +371,7 @@ function showWinMessage(msg) {
     }
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
-      randomizeCatchers();
+    randomizeCatchers();
     gameRunning = true;
     createDrop();
   };
@@ -270,7 +385,7 @@ function showWinMessage(msg) {
     }
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
-      randomizeCatchers();
+    randomizeCatchers();
     document.getElementById("menu-overlay").style.display = "flex";
     document.getElementById("game-wrapper").style.display = "none";
   };
