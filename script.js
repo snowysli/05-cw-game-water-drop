@@ -21,6 +21,158 @@ const gameOverSfx = new Audio('sounds/game-over.mp3');
 gameOverSfx.preload = 'auto';
 gameOverSfx.volume = 0.9;
 
+// Play sound when the player wins
+const winSfx = new Audio('sounds/win.mp3');
+winSfx.preload = 'auto';
+winSfx.volume = 0.9;
+
+// Fireworks overlay state
+let fireworksCanvas = null;
+let fireworksCtx = null;
+let fireworksAnimId = null;
+let fireworksParticles = [];
+let fireworksTickInterval = null;
+
+function createFireworksCanvas() {
+  if (fireworksCanvas) return;
+  fireworksCanvas = document.createElement('canvas');
+  fireworksCanvas.className = 'fireworks-canvas';
+  fireworksCanvas.style.position = 'absolute';
+  fireworksCanvas.style.left = '0';
+  fireworksCanvas.style.top = '0';
+  fireworksCanvas.style.width = '100%';
+  fireworksCanvas.style.height = '100%';
+  fireworksCanvas.style.pointerEvents = 'none';
+  fireworksCanvas.style.zIndex = '999';
+  // Append over the game container so it covers the playfield
+  gameContainer.appendChild(fireworksCanvas);
+  fireworksCtx = fireworksCanvas.getContext('2d');
+  resizeFireworksCanvas();
+  window.addEventListener('resize', resizeFireworksCanvas);
+}
+
+function resizeFireworksCanvas() {
+  if (!fireworksCanvas) return;
+  const rect = gameContainer.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  fireworksCanvas.width = Math.round(rect.width * dpr);
+  fireworksCanvas.height = Math.round(rect.height * dpr);
+  fireworksCanvas.style.width = rect.width + 'px';
+  fireworksCanvas.style.height = rect.height + 'px';
+  fireworksCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+// Spawn a burst of particles at (x,y)
+function spawnBurst(x, y, color) {
+  const count = 20 + Math.floor(Math.random() * 30);
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 4;
+    fireworksParticles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 60 + Math.floor(Math.random() * 40),
+      age: 0,
+      size: 1 + Math.random() * 3,
+      color: color || `hsl(${Math.floor(Math.random() * 360)}, 90%, 60%)`,
+    });
+  }
+}
+
+function updateAndDrawFireworks() {
+  if (!fireworksCtx) return;
+  const ctx = fireworksCtx;
+  // clear using canvas-size in CSS pixels
+  ctx.clearRect(0, 0, fireworksCanvas.width, fireworksCanvas.height);
+
+  for (let i = fireworksParticles.length - 1; i >= 0; i--) {
+    const p = fireworksParticles[i];
+    p.age++;
+    // gravity & drag
+    p.vy += 0.06;
+    p.vx *= 0.995;
+    p.vy *= 0.995;
+    p.x += p.vx;
+    p.y += p.vy;
+    const alpha = Math.max(0, 1 - p.age / p.life);
+
+    ctx.beginPath();
+    const rgb = hexToRgb(p.color);
+    ctx.fillStyle = `rgba(${rgb},${alpha})`;
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.age >= p.life) fireworksParticles.splice(i, 1);
+  }
+
+  fireworksAnimId = requestAnimationFrame(updateAndDrawFireworks);
+}
+
+function hexToRgb(input) {
+  if (!input) return '255,255,255';
+  input = input.trim();
+  // handle hsl(...) or rgb(...) by drawing to a tiny canvas
+  if (input.startsWith('hsl') || input.startsWith('rgb')) {
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 1;
+    const tctx = tmp.getContext('2d');
+    tctx.fillStyle = input;
+    tctx.fillRect(0, 0, 1, 1);
+    const d = tctx.getImageData(0, 0, 1, 1).data;
+    return `${d[0]},${d[1]},${d[2]}`;
+  }
+  if (input.startsWith('#')) {
+    const hex = input.substring(1);
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const bigint = parseInt(full, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `${r},${g},${b}`;
+  }
+  return '255,255,255';
+}
+
+function startFireworks() {
+  createFireworksCanvas();
+  // initial bursts across the top area
+  const rect = gameContainer.getBoundingClientRect();
+  const colors = ['hsl(12,90%,60%)','hsl(48,90%,60%)','hsl(200,90%,60%)','hsl(280,90%,60%)','hsl(140,90%,60%)'];
+  for (let i = 0; i < 5; i++) {
+    const x = rect.width * (0.15 + Math.random() * 0.7);
+    const y = rect.height * (0.12 + Math.random() * 0.25);
+    spawnBurst(x, y, colors[Math.floor(Math.random() * colors.length)]);
+  }
+  if (!fireworksAnimId) updateAndDrawFireworks();
+  if (!fireworksTickInterval) {
+    fireworksTickInterval = setInterval(() => {
+      const x = gameContainer.offsetWidth * (0.12 + Math.random() * 0.76);
+      const y = gameContainer.offsetHeight * (0.1 + Math.random() * 0.5);
+      spawnBurst(x, y);
+    }, 350);
+  }
+}
+
+function stopFireworks() {
+  if (fireworksTickInterval) {
+    clearInterval(fireworksTickInterval);
+    fireworksTickInterval = null;
+  }
+  if (fireworksAnimId) {
+    cancelAnimationFrame(fireworksAnimId);
+    fireworksAnimId = null;
+  }
+  fireworksParticles = [];
+  if (fireworksCanvas) {
+    window.removeEventListener('resize', resizeFireworksCanvas);
+    fireworksCanvas.remove();
+    fireworksCanvas = null;
+    fireworksCtx = null;
+  }
+}
+
 // Row (vertical line) x positions in px
 const rowPercents = [0.2, 0.4, 0.6, 0.8];
 function getRowXs() {
@@ -398,26 +550,28 @@ function createDrop() {
         }
       } else {
         score -= 50;
+
+        // Play ghost hit sound (also used in easy mode)
+        try {
+          if (ghostSfx && typeof ghostSfx.play === 'function') {
+            ghostSfx.currentTime = 0;
+            ghostSfx.play().catch(err => console.warn('Ghost SFX playback failed:', err));
+          }
+        } catch (err) {
+          console.warn('Ghost SFX error:', err);
+        }
+
         if (isEasyMode) {
           lives--;
           document.getElementById("lives").textContent = lives;
           if (lives <= 0) {
             gameRunning = false;
-            showWinMessage("Game Over! You ran out of lives.");
+            showWinMessage("Game Over! You ran out of lives.", false);
             return;
           }
         } else {
-          // Play ghost hit sound
-          try {
-            if (ghostSfx && typeof ghostSfx.play === 'function') {
-              ghostSfx.currentTime = 0;
-              ghostSfx.play().catch(err => console.warn('Ghost SFX playback failed:', err));
-            }
-          } catch (err) {
-            console.warn('Ghost SFX error:', err);
-          }
           gameRunning = false;
-          showWinMessage("Game Over! You touched a ghost.");
+          showWinMessage("Game Over! You touched a ghost.", false);
           return;
         }
       }
@@ -428,14 +582,14 @@ function createDrop() {
       if (isEasyMode) {
         if (score >= 500) {
           gameRunning = false;
-          showWinMessage("Good job! Jerry is filled!");
+          showWinMessage("Good job! Jerry is filled!", true);
         } else if (gameRunning) {
           createDrop();
         }
       } else {
         if (score >= 1000) {
           gameRunning = false;
-          showWinMessage("Congratulations! Jerry is filled with water on hard mode!");
+          showWinMessage("Congratulations! Jerry is filled with water on hard mode!", true);
         } else if (gameRunning) {
           createDrop();
         }
@@ -450,26 +604,36 @@ function createDrop() {
 }
 
 // ------------------- WIN / GAME OVER -------------------
-function showWinMessage(msg) {
+function showWinMessage(msg, isWin) {
   const winMsg = document.getElementById("win-message");
   const winMsgText = document.getElementById("win-message-text");
   winMsgText.textContent = msg;
-  // Play game over sound (best-effort)
+  // Play appropriate sound (win vs game over)
   try {
-    if (gameOverSfx && typeof gameOverSfx.play === 'function') {
+    const sfx = isWin ? winSfx : gameOverSfx;
+    if (sfx && typeof sfx.play === 'function') {
       // Some browsers block autoplay; play in response to user interaction should succeed.
-      gameOverSfx.currentTime = 0;
-      gameOverSfx.play().catch(err => console.warn('SFX playback failed:', err));
+      sfx.currentTime = 0;
+      sfx.play().catch(err => console.warn('SFX playback failed:', err));
     }
   } catch (err) {
-    console.warn('Game over SFX error:', err);
+    console.warn('SFX error:', err);
   }
+
+  // Start fireworks for wins
+  if (isWin) {
+    try { startFireworks(); } catch (e) { console.warn('Fireworks failed:', e); }
+  }
+
   winMsg.style.display = "block";
 
   // Remove all user-drawn lines
   document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
 
   document.getElementById("replay-btn").onclick = () => {
+    // Stop fireworks when leaving the win screen
+    stopFireworks();
+
     winMsg.style.display = "none";
     document.getElementById("score").textContent = "0";
     if (isEasyMode) {
@@ -498,6 +662,9 @@ function showWinMessage(msg) {
   };
 
   document.getElementById("menu-btn").onclick = () => {
+    // Stop fireworks when returning to menu
+    stopFireworks();
+
     winMsg.style.display = "none";
     document.getElementById("score").textContent = "0";
     if (isEasyMode) {
