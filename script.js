@@ -4,6 +4,23 @@ let startPoint = null;
 const gameContainer = document.getElementById("game-container");
 const drawLayer = document.getElementById("draw-layer");
 
+// --- Sound effects ---
+// Place your sound files under `sounds/` (relative to the site root):
+// - sounds/point.mp3 -> played when the player scores
+// - sounds/game.mp3  -> played when the player touches a ghost
+// - sounds/game-over.mp3 -> played when the game ends (already used)
+const pointSfx = new Audio('sounds/point.mp3');
+pointSfx.preload = 'auto';
+pointSfx.volume = 0.9;
+
+const ghostSfx = new Audio('sounds/game.mp3');
+ghostSfx.preload = 'auto';
+ghostSfx.volume = 0.9;
+
+const gameOverSfx = new Audio('sounds/game-over.mp3');
+gameOverSfx.preload = 'auto';
+gameOverSfx.volume = 0.9;
+
 // Row (vertical line) x positions in px
 const rowPercents = [0.2, 0.4, 0.6, 0.8];
 function getRowXs() {
@@ -180,6 +197,15 @@ document.getElementById("menu-easy-btn").addEventListener("click", () => {
   lives = 3;
   document.getElementById("lives").textContent = lives;
   document.getElementById("menu-overlay").style.display = "none";
+  // Hide the site title when gameplay begins
+  const header = document.querySelector('.site-header');
+  if (header) header.style.display = 'none';
+  // Ensure game container reflects easy mode
+  const gc = document.getElementById('game-container');
+  if (gc) {
+    gc.classList.remove('hard-mode');
+    gc.classList.add('easy-mode');
+  }
   document.getElementById("game-wrapper").style.display = "flex";
 });
 
@@ -190,6 +216,15 @@ document.getElementById("menu-hard-btn").addEventListener("click", () => {
   lives = 1; 
   document.getElementById("lives").textContent = lives;
   document.getElementById("menu-overlay").style.display = "none";
+  // Hide the site title when gameplay begins
+  const header = document.querySelector('.site-header');
+  if (header) header.style.display = 'none';
+  // Mark game container as hard mode
+  const gc = document.getElementById('game-container');
+  if (gc) {
+    gc.classList.remove('easy-mode');
+    gc.classList.add('hard-mode');
+  }
   document.getElementById("game-wrapper").style.display = "flex";
 });
 
@@ -203,6 +238,10 @@ function startGame() {
     lives = 3;
     document.getElementById("lives").textContent = lives;
   }
+
+  // Hide the site title when gameplay starts
+  const header = document.querySelector('.site-header');
+  if (header) header.style.display = 'none';
 
   gameRunning = true;
   createDrop();
@@ -348,6 +387,15 @@ function createDrop() {
 
       if (catcherImg && catcherImg.src.includes('water-can')) {
         score += 100;
+        // Play point sound
+        try {
+          if (pointSfx && typeof pointSfx.play === 'function') {
+            pointSfx.currentTime = 0;
+            pointSfx.play().catch(err => console.warn('Point SFX playback failed:', err));
+          }
+        } catch (err) {
+          console.warn('Point SFX error:', err);
+        }
       } else {
         score -= 50;
         if (isEasyMode) {
@@ -359,6 +407,15 @@ function createDrop() {
             return;
           }
         } else {
+          // Play ghost hit sound
+          try {
+            if (ghostSfx && typeof ghostSfx.play === 'function') {
+              ghostSfx.currentTime = 0;
+              ghostSfx.play().catch(err => console.warn('Ghost SFX playback failed:', err));
+            }
+          } catch (err) {
+            console.warn('Ghost SFX error:', err);
+          }
           gameRunning = false;
           showWinMessage("Game Over! You touched a ghost.");
           return;
@@ -397,6 +454,16 @@ function showWinMessage(msg) {
   const winMsg = document.getElementById("win-message");
   const winMsgText = document.getElementById("win-message-text");
   winMsgText.textContent = msg;
+  // Play game over sound (best-effort)
+  try {
+    if (gameOverSfx && typeof gameOverSfx.play === 'function') {
+      // Some browsers block autoplay; play in response to user interaction should succeed.
+      gameOverSfx.currentTime = 0;
+      gameOverSfx.play().catch(err => console.warn('SFX playback failed:', err));
+    }
+  } catch (err) {
+    console.warn('Game over SFX error:', err);
+  }
   winMsg.style.display = "block";
 
   // Remove all user-drawn lines
@@ -412,6 +479,20 @@ function showWinMessage(msg) {
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
     randomizeCatchers();
+    // Ensure the title remains hidden when replaying
+    const header = document.querySelector('.site-header');
+    if (header) header.style.display = 'none';
+    // Keep the hard-mode class as-is on replay (retain difficulty)
+    const gc = document.getElementById('game-container');
+    if (gc) {
+      if (isEasyMode) {
+        gc.classList.remove('hard-mode');
+        gc.classList.add('easy-mode');
+      } else {
+        gc.classList.remove('easy-mode');
+        gc.classList.add('hard-mode');
+      }
+    }
     gameRunning = true;
     createDrop();
   };
@@ -426,6 +507,15 @@ function showWinMessage(msg) {
     document.querySelectorAll('.water-drop').forEach(d => d.remove());
     document.querySelectorAll('.user-drawn-line').forEach(line => line.remove());
     randomizeCatchers();
+    // Show the site title again when returning to the menu
+    const header = document.querySelector('.site-header');
+    if (header) header.style.display = '';
+    // Clear hard-mode visual state when returning to menu
+    const gc = document.getElementById('game-container');
+    if (gc) {
+      gc.classList.remove('hard-mode');
+      gc.classList.remove('easy-mode');
+    }
     document.getElementById("menu-overlay").style.display = "flex";
     document.getElementById("game-wrapper").style.display = "none";
   };

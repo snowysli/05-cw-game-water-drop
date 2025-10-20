@@ -53,7 +53,7 @@
     z-index: 200;
     text-align: center;
     border: 3px solid #2E9DF7;
-    font-family: 'Avenir', 'Proxima Nova', Arial, sans-serif;
+    font-family: 'Avenir';
 }
 .catcher-img {
     width: 80px;
@@ -79,7 +79,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(44, 157, 247, 0.85);
+    /* Fallback solid color for older browsers */
+    background-color: rgba(44, 157, 247, 0.92);
+    /* Smooth vertical gradient from Charity blue to light aqua */
+    background: linear-gradient(180deg, #2E9DF7 0%, #77e87b 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -90,10 +93,10 @@
     background-color: transparent;
     background-image: url('img/water-can-transparent.png');
     background-repeat: no-repeat;
-    background-position: center 18px;
-    background-size: 400px auto;
+    background-position: center center; /* center the can */
+    background-size: 420px auto;
     border-radius: 16px;
-    padding: 200px 32px 32px 32px; /* top padding increased to make room for the can image */
+    padding: 80px 32px 32px 32px; /* reduced top padding so buttons move upward */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -159,11 +162,12 @@
     background: #2E9DF7;
     color: #fff;
     cursor: pointer;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     transition: background 0.2s;
+    font-family: 'Proxima Nova';
 }
 #menu-easy-btn:hover, #menu-hard-btn:hover {
-    background: #9e9216;
+    background: #ffffff00;
 }
 /* Catcher items at the bottom of each line */
 .catcher {
@@ -212,8 +216,9 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #8BD1CB;
-    font-family: 'Proxima Nova', Arial, sans-serif;
+    background: linear-gradient(90deg, #2E9DF7 0%, #F16061 100%);
+    font-family: 'Proxima Nova';
+
 }
 
 .site-header {
@@ -222,15 +227,19 @@ body {
     left: 0;
     width: 100%;
     background: transparent;
-    padding: 12px 0;
+    /* Nudge the header down slightly so the title doesn't sit flush to the top */
+    padding: 100px 0;
     text-align: center;
     z-index: 300;
 }
 
 .site-header .game-title {
     margin: 0;
-    font-size: 40px;
-    color: #131313;
+    font-size: 60px;
+    color: #d77e2b;
+    /* Use Proxima Nova for the page title and prefer the bold face */
+    font-family: 'Proxima Nova';
+    font-weight: bold;
 }
 
 .game-wrapper {
@@ -238,7 +247,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    font-family: 'Proxima Nova', Arial, sans-serif;
+    font-family: 'Proxima Nova';
 }
 
 .score-panel {
@@ -250,7 +259,7 @@ body {
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: 'Proxima Nova', Arial, sans-serif;
+    font-family: 'Proxima Nova';
 }
 
 .timer {
@@ -267,7 +276,19 @@ body {
     border-radius: 8px;
     position: relative;
     overflow: hidden;
+    font-family: 'Proxima Nova';
+    /* Smooth transition when difficulty changes background color */
+    transition: background-color 300ms ease;
+}
 
+/* Hard mode background color for higher difficulty */
+#game-container.hard-mode {
+    background-color: #ffe3e3;
+}
+
+/* Explicit easy-mode class so mode toggling is symmetrical */
+#game-container.easy-mode {
+    background-color: #e6f7ff;
 }
 
 .line {
@@ -333,10 +354,10 @@ body {
 }
 
 .game-title {
-    color: #131313;
+    color: #FF902A;
     font-size: 48px;
     margin-top: 0;
-    margin-bottom: 5px;  /* reduced from 20px */
+    margin-bottom: 5px;
     text-align: center;
 }
 
