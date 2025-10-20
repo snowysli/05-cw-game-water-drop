@@ -24,12 +24,17 @@ function snapToNearestRowWithIdx(x) {
   return { x: best, idx };
 }
 
-gameContainer.addEventListener("mousedown", (e) => {
-  if (e.button !== 0) return;
-  isDrawing = true;
+// Shared drawing helpers (mouse + touch)
+function getContainerPoint(clientX, clientY) {
   const rect = gameContainer.getBoundingClientRect();
-  let x = e.clientX - rect.left;
-  let y = e.clientY - rect.top;
+  return { x: clientX - rect.left, y: clientY - rect.top };
+}
+
+function startDrawingAt(clientX, clientY) {
+  isDrawing = true;
+  const pt = getContainerPoint(clientX, clientY);
+  let x = pt.x;
+  let y = pt.y;
   const snap = snapToNearestRowWithIdx(x);
   x = snap.x;
   startPoint = { x, y };
@@ -51,13 +56,13 @@ gameContainer.addEventListener("mousedown", (e) => {
   drawLayer._snapStartX = x;
   drawLayer._snapStartIdx = snap.idx;
   drawLayer.style.pointerEvents = "auto";
-});
+}
 
-gameContainer.addEventListener("mousemove", (e) => {
+function moveDrawingTo(clientX, clientY) {
   if (!isDrawing || !drawLayer._currentLine) return;
-  const rect = gameContainer.getBoundingClientRect();
-  let x = e.clientX - rect.left;
-  let y = e.clientY - rect.top;
+  const pt = getContainerPoint(clientX, clientY);
+  let x = pt.x;
+  let y = pt.y;
   // Snap end to nearest row
   const snap = snapToNearestRowWithIdx(x);
   let valid = false;
@@ -79,9 +84,9 @@ gameContainer.addEventListener("mousemove", (e) => {
     drawLayer._currentLine._valid = false;
     drawLayer._currentLine._snapEndIdx = null;
   }
-});
+}
 
-gameContainer.addEventListener("mouseup", (e) => {
+function endDrawing() {
   if (!isDrawing || !drawLayer._currentLine) return;
   // Only keep the line if it connects to an immediate neighbor row
   if (!drawLayer._currentLine._valid) {
@@ -90,15 +95,50 @@ gameContainer.addEventListener("mouseup", (e) => {
   isDrawing = false;
   drawLayer._currentLine = null;
   drawLayer.style.pointerEvents = "none";
+}
+
+// Mouse events
+gameContainer.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return;
+  startDrawingAt(e.clientX, e.clientY);
+});
+
+gameContainer.addEventListener("mousemove", (e) => {
+  moveDrawingTo(e.clientX, e.clientY);
+});
+
+gameContainer.addEventListener("mouseup", (e) => {
+  endDrawing();
 });
 
 gameContainer.addEventListener("mouseleave", (e) => {
-  if (isDrawing && drawLayer._currentLine) {
-    isDrawing = false;
-    drawLayer._currentLine = null;
-    drawLayer.style.pointerEvents = "none";
-  }
+  if (isDrawing) endDrawing();
 });
+
+// Touch events
+gameContainer.addEventListener("touchstart", (e) => {
+  // Prevent default to avoid scrolling while drawing
+  e.preventDefault();
+  const t = e.touches[0];
+  startDrawingAt(t.clientX, t.clientY);
+}, { passive: false });
+
+gameContainer.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const t = e.touches[0];
+  moveDrawingTo(t.clientX, t.clientY);
+}, { passive: false });
+
+gameContainer.addEventListener("touchend", (e) => {
+  // touchend has no touches; use changedTouches
+  const t = e.changedTouches && e.changedTouches[0];
+  if (t) moveDrawingTo(t.clientX, t.clientY);
+  endDrawing();
+}, { passive: false });
+
+gameContainer.addEventListener("touchcancel", (e) => {
+  endDrawing();
+}, { passive: false });
 
 // ------------------- GAME STATE -------------------
 let gameRunning = false;

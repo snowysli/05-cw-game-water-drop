@@ -86,28 +86,84 @@
     z-index: 100;
 }
 .menu-box {
-    background: #fff;
+    /* Use the water can image as the menu background instead of a white box */
+    background-color: transparent;
+    background-image: url('img/water-can-transparent.png');
+    background-repeat: no-repeat;
+    background-position: center 18px;
+    background-size: 400px auto;
     border-radius: 16px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
-    padding: 48px 32px 32px 32px;
+    padding: 200px 32px 32px 32px; /* top padding increased to make room for the can image */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 24px;
+    z-index: 150; /* ensure menu-box is above decorative layers */
 }
+
+.menu-tree {
+    position: absolute;
+    bottom: 6%;
+    width: 220px;
+    height: 250px;
+    z-index: 101;
+    pointer-events: none; /* decorative only */
+    opacity: 0.98;
+    transform: translateY(0);
+}
+.menu-tree-left { left: 3%; }
+.menu-tree-right { right: 8%; }
+
+
+@media (max-width: 700px) {
+    .menu-tree { display: none; }
+}
+
+.menu-tree-img {
+    width: 320px;
+    height: 300px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+/* Decorative flower layer at bottom of menu overlay */
+.menu-flowers {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 140px;
+    z-index: 100; /* behind menu-box but above overlay background */
+    pointer-events: none;
+}
+
+@media (max-width: 700px) {
+    .menu-flowers { display: none; }
+}
+
+.menu-flower {
+    position: absolute;
+    width: 50px;
+    height: 68px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+
 #menu-easy-btn, #menu-hard-btn {
-    padding: 12px 32px;
-    font-size: 20px;
+    padding: 15px 40px;
+    font-size: 24px;
     border: none;
     border-radius: 8px;
     background: #2E9DF7;
     color: #fff;
     cursor: pointer;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     transition: background 0.2s;
 }
 #menu-easy-btn:hover, #menu-hard-btn:hover {
-    background: #159A48;
+    background: #9e9216;
 }
 /* Catcher items at the bottom of each line */
 .catcher {
@@ -158,6 +214,23 @@ body {
     min-height: 100vh;
     background-color: #8BD1CB;
     font-family: 'Proxima Nova', Arial, sans-serif;
+}
+
+.site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: transparent;
+    padding: 12px 0;
+    text-align: center;
+    z-index: 300;
+}
+
+.site-header .game-title {
+    margin: 0;
+    font-size: 40px;
+    color: #131313;
 }
 
 .game-wrapper {

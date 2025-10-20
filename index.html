@@ -7,15 +7,37 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <header class="site-header">
+        <h1 class="game-title">Bottle Fill</h1>
+    </header>
     <div class="menu-overlay" id="menu-overlay">
+        <div class="menu-flowers" aria-hidden="true">
+            <!-- Decorative flower images positioned across the bottom (evenly spaced) -->
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:40px; bottom:18px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:350px; bottom:12px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:460px; bottom:20px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:575px; bottom:10px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:695px; bottom:16px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:825px; bottom:8px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:950px; bottom:18px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:1080px; bottom:12px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:1200px; bottom:20px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:1340px; bottom:10px;" />
+            <img class="menu-flower" src="img/flower.png" alt="flower" style="left:1630px; bottom:14px;" />
+        </div>
+        <div class="menu-tree menu-tree-left" aria-hidden="true">
+            <img src="img/tree.png" alt="Tree" class="menu-tree-img">
+        </div>
         <div class="menu-box">
-            <h1 class="game-title">Bottle Fill</h1>
             <button id="menu-easy-btn">Easy</button>
             <button id="menu-hard-btn">Hard</button>
         </div>
+        <div class="menu-tree menu-tree-right" aria-hidden="true">
+            <img src="img/tree.png" alt="Tree" class="menu-tree-img">
+        </div>
+
     </div>
     <div class="game-wrapper" id="game-wrapper" style="display:none;">
-        <h1 class="game-title">Bottle Fill</h1>
         <p class="game-tagline">Guide the water to Jerry and avoid the Ghost!</p>
         <div class="score-panel">
             <div class="score">Score: <span id="score">0</span></div>
