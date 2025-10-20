@@ -582,6 +582,15 @@ function createDrop() {
       if (isEasyMode) {
         if (score >= 500) {
           gameRunning = false;
+          // Play win sound specifically for easy-mode wins
+          try {
+            if (winSfx && typeof winSfx.play === 'function') {
+              winSfx.currentTime = 0;
+              winSfx.play().catch(err => console.warn('Win SFX playback failed:', err));
+            }
+          } catch (err) {
+            console.warn('Win SFX error:', err);
+          }
           showWinMessage("Good job! Jerry is filled!", true);
         } else if (gameRunning) {
           createDrop();
